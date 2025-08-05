@@ -40,7 +40,7 @@ pipeline {
                 script {
                     sh '''
                     docker rm -f myapp || true
-                    docker run -d --name myapp -p 5555:5000 $DOCKER_IMAGE
+                    docker run -d --name myapp -p 5001:5000 $DOCKER_IMAGE
                     '''
                 }
             }
