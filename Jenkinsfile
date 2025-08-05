@@ -26,7 +26,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    /sh "docker build -t ${env.IMAGE_TAG} ."
+                    sh """
+                        docker pull ${env.IMAGE_TAG} || true
+                        docker build --cache-from=${env.IMAGE_TAG} -t ${env.IMAGE_TAG} .
+                    """
                 }
             }
         }
@@ -45,7 +48,11 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('', env.DOCKER_CREDENTIALS_ID) {
-                        sh "docker push ${env.IMAGE_TAG}"
+                        sh """
+                            docker push ${env.IMAGE_TAG}
+                            docker tag ${env.IMAGE_TAG} sonu6034/jenkins-docker-cicd:latest
+                            docker push sonu6034/jenkins-docker-cicd:latest
+                        """
                     }
                 }
             }
