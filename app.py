@@ -3,7 +3,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Hello from Jenkins CI/CD without Git working successful and i was intersted from indain!"
+    return "Hello from Jenkins CI/CD within Git working successful "
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
