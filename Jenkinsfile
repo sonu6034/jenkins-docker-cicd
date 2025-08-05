@@ -2,15 +2,31 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "sonu6034/jenkins-docker-cicd:latest"
         DOCKER_CREDENTIALS_ID = "docker-hub-creds"
     }
 
     stages {
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Get Commit Hash') {
+            steps {
+                script {
+                    COMMIT_HASH = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    IMAGE_TAG = "sonu6034/jenkins-docker-cicd:${COMMIT_HASH}"
+                    env.IMAGE_TAG = IMAGE_TAG
+                    echo "Docker image will be tagged as: ${IMAGE_TAG}"
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t $DOCKER_IMAGE .'
+                    sh "docker build -t ${env.IMAGE_TAG} ."
                 }
             }
         }
@@ -18,8 +34,8 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('', DOCKER_CREDENTIALS_ID) {
-                        echo 'Logged in'
+                    docker.withRegistry('', env.DOCKER_CREDENTIALS_ID) {
+                        echo 'Logged in to Docker Hub'
                     }
                 }
             }
@@ -28,8 +44,8 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('', DOCKER_CREDENTIALS_ID) {
-                        sh 'docker push $DOCKER_IMAGE'
+                    docker.withRegistry('', env.DOCKER_CREDENTIALS_ID) {
+                        sh "docker push ${env.IMAGE_TAG}"
                     }
                 }
             }
@@ -38,13 +54,12 @@ pipeline {
         stage('Run Container') {
             steps {
                 script {
-                    sh '''
-                    docker rm -f myapp || true
-                    docker run -d --name myapp -p 5555:5000 $DOCKER_IMAGE
-                    '''
+                    sh """
+                        docker rm -f myapp || true
+                        docker run -d --name myapp -p 5555:5000 ${env.IMAGE_TAG}
+                    """
                 }
             }
         }
     }
 }
-
